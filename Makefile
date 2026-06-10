@@ -2,7 +2,10 @@ APP_NAME := OpenInNvim
 APP_DISPLAY_NAME := Open In Nvim
 EXTENSION_NAME := OpenInNvimFinderSync
 BUILD_DIR := build
+DIST_DIR := dist
 APP_DIR := $(BUILD_DIR)/$(APP_DISPLAY_NAME).app
+DMG_STAGE_DIR := $(BUILD_DIR)/dmg
+DMG_PATH := $(DIST_DIR)/$(APP_DISPLAY_NAME).dmg
 CONTENTS_DIR := $(APP_DIR)/Contents
 MACOS_DIR := $(CONTENTS_DIR)/MacOS
 RESOURCES_DIR := $(CONTENTS_DIR)/Resources
@@ -14,7 +17,7 @@ EXTENSION_RESOURCES_DIR := $(EXTENSION_CONTENTS_DIR)/Resources
 INSTALL_DIR ?= /Applications
 INSTALLED_APP := $(INSTALL_DIR)/$(APP_DISPLAY_NAME).app
 
-.PHONY: all build clean install
+.PHONY: all build clean install dmg
 
 all: build
 
@@ -44,5 +47,12 @@ install: build
 	-/usr/bin/pluginkit -r "$(INSTALLED_APP)/Contents/PlugIns/$(EXTENSION_NAME).appex"
 	-/usr/bin/pluginkit -a "$(INSTALLED_APP)/Contents/PlugIns/$(EXTENSION_NAME).appex"
 
+dmg: build
+	rm -rf "$(DMG_STAGE_DIR)" "$(DMG_PATH)"
+	mkdir -p "$(DMG_STAGE_DIR)" "$(DIST_DIR)"
+	cp -R "$(APP_DIR)" "$(DMG_STAGE_DIR)/$(APP_DISPLAY_NAME).app"
+	ln -s /Applications "$(DMG_STAGE_DIR)/Applications"
+	/usr/bin/hdiutil create -volname "$(APP_DISPLAY_NAME)" -srcfolder "$(DMG_STAGE_DIR)" -ov -format UDZO "$(DMG_PATH)"
+
 clean:
-	rm -rf "$(BUILD_DIR)"
+	rm -rf "$(BUILD_DIR)" "$(DIST_DIR)"

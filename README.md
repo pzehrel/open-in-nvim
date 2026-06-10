@@ -140,4 +140,16 @@ make build
 open "build/Open In Nvim.app"
 ```
 
+生成 DMG：
+
+```sh
+make dmg
+```
+
+输出文件位于：
+
+```text
+dist/Open In Nvim.dmg
+```
+
 核心逻辑在 `Resources/open-in-nvim.sh`，macOS 服务和默认打开方式入口在 `Sources/OpenInNvim/main.swift`。
