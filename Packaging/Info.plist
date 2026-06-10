@@ -27,6 +27,8 @@
   </array>
   <key>CFBundleExecutable</key>
   <string>OpenInNvim</string>
+  <key>CFBundleIconFile</key>
+  <string>AppIcon</string>
   <key>CFBundleIdentifier</key>
   <string>dev.pzehrel.open-in-nvim</string>
   <key>CFBundleInfoDictionaryVersion</key>

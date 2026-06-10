@@ -5,3 +5,4 @@ build/
 *.swo
 .swiftpm/
 DerivedData/
+Resources/AppIcon.iconset/

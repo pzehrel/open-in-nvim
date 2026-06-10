@@ -10,6 +10,7 @@ PLUGINS_DIR := $(CONTENTS_DIR)/PlugIns
 EXTENSION_DIR := $(PLUGINS_DIR)/$(EXTENSION_NAME).appex
 EXTENSION_CONTENTS_DIR := $(EXTENSION_DIR)/Contents
 EXTENSION_MACOS_DIR := $(EXTENSION_CONTENTS_DIR)/MacOS
+EXTENSION_RESOURCES_DIR := $(EXTENSION_CONTENTS_DIR)/Resources
 INSTALL_DIR ?= /Applications
 INSTALLED_APP := $(INSTALL_DIR)/$(APP_DISPLAY_NAME).app
 
@@ -18,12 +19,14 @@ INSTALLED_APP := $(INSTALL_DIR)/$(APP_DISPLAY_NAME).app
 all: build
 
 build:
-	mkdir -p "$(MACOS_DIR)" "$(RESOURCES_DIR)" "$(EXTENSION_MACOS_DIR)"
+	mkdir -p "$(MACOS_DIR)" "$(RESOURCES_DIR)" "$(EXTENSION_MACOS_DIR)" "$(EXTENSION_RESOURCES_DIR)"
 	CLANG_MODULE_CACHE_PATH="$(CURDIR)/$(BUILD_DIR)/ModuleCache" swiftc -O -framework AppKit Sources/OpenInNvim/main.swift -o "$(MACOS_DIR)/$(APP_NAME)"
 	CLANG_MODULE_CACHE_PATH="$(CURDIR)/$(BUILD_DIR)/ModuleCache" swiftc -O -application-extension -module-name $(EXTENSION_NAME) -framework AppKit -framework FinderSync Sources/OpenInNvimFinderSync/FinderSync.swift -o "$(EXTENSION_MACOS_DIR)/$(EXTENSION_NAME)"
 	cp Packaging/Info.plist "$(CONTENTS_DIR)/Info.plist"
 	cp Packaging/FinderSyncInfo.plist "$(EXTENSION_CONTENTS_DIR)/Info.plist"
 	cp Resources/open-in-nvim.sh "$(RESOURCES_DIR)/open-in-nvim.sh"
+	cp Resources/AppIcon.icns "$(RESOURCES_DIR)/AppIcon.icns"
+	cp Resources/AppIcon.icns "$(EXTENSION_RESOURCES_DIR)/AppIcon.icns"
 	chmod +x "$(RESOURCES_DIR)/open-in-nvim.sh"
 	chmod +x "$(EXTENSION_MACOS_DIR)/$(EXTENSION_NAME)"
 	/usr/bin/codesign --force --deep --sign - "$(APP_DIR)"
