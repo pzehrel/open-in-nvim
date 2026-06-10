@@ -29,7 +29,12 @@ make install
 /Applications/Open In Nvim.app
 ```
 
-从旧版本升级时，建议先删除 `/Applications/Open In Nvim.app`，再从 DMG 中拖入新版本。
+从旧版本升级时，建议先删除 `/Applications/Open In Nvim.app`，再从 DMG 中拖入新版本。如果右键服务仍然指向旧版本，可以刷新 macOS Services 缓存：
+
+```sh
+/System/Library/CoreServices/pbs -flush
+/System/Library/CoreServices/pbs -update
+```
 
 如果 Finder 根菜单没有立刻出现，可以在系统设置里启用 Finder 扩展：
 

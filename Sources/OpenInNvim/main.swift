@@ -94,23 +94,11 @@ final class OpenInNvimRunner {
     private let scriptPath: String
 
     init() {
-        var candidates: [String] = []
-
         if let resourcePath = Bundle.main.resourcePath {
-            candidates.append((resourcePath as NSString).appendingPathComponent("open-in-nvim.sh"))
+            self.scriptPath = (resourcePath as NSString).appendingPathComponent("open-in-nvim.sh")
+        } else {
+            self.scriptPath = "./open-in-nvim.sh"
         }
-
-        if let executableURL = Bundle.main.executableURL {
-            candidates.append(
-                executableURL
-                    .deletingLastPathComponent()
-                    .appendingPathComponent("open-in-nvim.sh")
-                    .path
-            )
-        }
-
-        candidates.append("./open-in-nvim.sh")
-        self.scriptPath = candidates.first { FileManager.default.isReadableFile(atPath: $0) } ?? candidates[0]
     }
 
     func open(_ urls: [URL], completion: ((String?) -> Void)? = nil) {
