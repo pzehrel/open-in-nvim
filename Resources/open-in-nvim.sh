@@ -127,6 +127,16 @@ run_ghostty() {
   fi
 }
 
+run_alacritty() {
+  local command="$1"
+
+  if command -v alacritty >/dev/null 2>&1; then
+    /usr/bin/nohup alacritty -e /bin/zsh -lc "$command" >/dev/null 2>&1 &
+  else
+    /usr/bin/open -na "Alacritty" --args -e /bin/zsh -lc "$command"
+  fi
+}
+
 open_terminal() {
   local command="$1"
 
@@ -139,6 +149,9 @@ open_terminal() {
     ghostty)
       run_ghostty "$command"
       ;;
+    alacritty)
+      run_alacritty "$command"
+      ;;
     iterm|iterm2)
       run_iterm "$command"
       ;;
@@ -148,6 +161,8 @@ open_terminal() {
     auto)
       if /usr/bin/pgrep -x Ghostty >/dev/null 2>&1 || command -v ghostty >/dev/null 2>&1 || [[ -d "/Applications/Ghostty.app" || -d "$HOME/Applications/Ghostty.app" ]]; then
         run_ghostty "$command"
+      elif /usr/bin/pgrep -x Alacritty >/dev/null 2>&1 || command -v alacritty >/dev/null 2>&1 || [[ -d "/Applications/Alacritty.app" || -d "$HOME/Applications/Alacritty.app" ]]; then
+        run_alacritty "$command"
       elif [[ -d "/Applications/iTerm.app" || -d "$HOME/Applications/iTerm.app" ]]; then
         run_iterm "$command"
       else

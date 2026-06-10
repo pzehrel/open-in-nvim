@@ -141,6 +141,7 @@ final class SettingsWindowController: NSWindowController {
     private let terminalOptions: [(title: String, value: String)] = [
         ("自动选择", "auto"),
         ("Ghostty", "ghostty"),
+        ("Alacritty", "alacritty"),
         ("iTerm2", "iterm"),
         ("Terminal.app", "terminal"),
         ("自定义 App 名称", "custom")

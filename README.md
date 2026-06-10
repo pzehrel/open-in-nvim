@@ -46,6 +46,7 @@ make install
 
 - 自动选择
 - Ghostty
+- Alacritty
 - iTerm2
 - Terminal.app
 - 自定义 App 名称
@@ -74,6 +75,7 @@ OPEN_IN_NVIM_NVIM=/opt/homebrew/bin/nvim
 
 - `auto`
 - `ghostty`
+- `alacritty`
 - `iterm`
 - `terminal`
 - 任意支持 AppleScript `do script` 的终端 App 名称
