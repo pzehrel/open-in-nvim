@@ -28,9 +28,11 @@ build:
 	cp Packaging/Info.plist "$(CONTENTS_DIR)/Info.plist"
 	cp Packaging/FinderSyncInfo.plist "$(EXTENSION_CONTENTS_DIR)/Info.plist"
 	cp Resources/open-in-nvim.sh "$(RESOURCES_DIR)/open-in-nvim.sh"
+	cp Resources/open-in-nvim.sh "$(MACOS_DIR)/open-in-nvim.sh"
 	cp Resources/AppIcon.icns "$(RESOURCES_DIR)/AppIcon.icns"
 	cp Resources/AppIcon.icns "$(EXTENSION_RESOURCES_DIR)/AppIcon.icns"
 	chmod +x "$(RESOURCES_DIR)/open-in-nvim.sh"
+	chmod +x "$(MACOS_DIR)/open-in-nvim.sh"
 	chmod +x "$(EXTENSION_MACOS_DIR)/$(EXTENSION_NAME)"
 	/usr/bin/codesign --force --deep --sign - "$(APP_DIR)"
 

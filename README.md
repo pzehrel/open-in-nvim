@@ -29,6 +29,8 @@ make install
 /Applications/Open In Nvim.app
 ```
 
+从旧版本升级时，建议先删除 `/Applications/Open In Nvim.app`，再从 DMG 中拖入新版本。
+
 如果 Finder 根菜单没有立刻出现，可以在系统设置里启用 Finder 扩展：
 
 ```text
