@@ -5,6 +5,7 @@ struct AppConfig {
     var terminal: String = "auto"
     var nvimPath: String = "/opt/homebrew/bin/nvim"
     var server: String = ""
+    var remoteOpen: String = "tab"
 }
 
 final class ConfigStore {
@@ -46,6 +47,8 @@ final class ConfigStore {
                 config.nvimPath = value
             case "OPEN_IN_NVIM_SERVER":
                 config.server = value
+            case "OPEN_IN_NVIM_REMOTE_OPEN":
+                config.remoteOpen = value
             default:
                 continue
             }
@@ -64,6 +67,7 @@ final class ConfigStore {
             "# 由“在 nvim 中打开”设置界面生成",
             "OPEN_IN_NVIM_TERMINAL=\(shellQuote(config.terminal))",
             "OPEN_IN_NVIM_NVIM=\(shellQuote(config.nvimPath))",
+            "OPEN_IN_NVIM_REMOTE_OPEN=\(shellQuote(config.remoteOpen))",
             config.server.isEmpty ? nil : "OPEN_IN_NVIM_SERVER=\(shellQuote(config.server))"
         ].compactMap { $0 }
 
@@ -134,6 +138,7 @@ final class SettingsWindowController: NSWindowController {
     private let customTerminalField = NSTextField()
     private let nvimPathField = NSTextField()
     private let serverField = NSTextField()
+    private let remoteOpenPopup = NSPopUpButton()
     private let statusLabel = NSTextField(labelWithString: "")
     private let configStore = ConfigStore.shared
     private let runner: OpenInNvimRunner
@@ -147,11 +152,18 @@ final class SettingsWindowController: NSWindowController {
         ("自定义 App 名称", "custom")
     ]
 
+    private let remoteOpenOptions: [(title: String, value: String)] = [
+        ("新标签页", "tab"),
+        ("水平窗口", "split"),
+        ("垂直窗口", "vsplit"),
+        ("只打开 buffer", "buffer")
+    ]
+
     init(runner: OpenInNvimRunner) {
         self.runner = runner
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 520, height: 350),
+            contentRect: NSRect(x: 0, y: 0, width: 520, height: 390),
             styleMask: [.titled, .closable, .miniaturizable],
             backing: .buffered,
             defer: false
@@ -177,6 +189,7 @@ final class SettingsWindowController: NSWindowController {
         terminalPopup.addItems(withTitles: terminalOptions.map(\.title))
         terminalPopup.target = self
         terminalPopup.action = #selector(terminalChanged)
+        remoteOpenPopup.addItems(withTitles: remoteOpenOptions.map(\.title))
 
         customTerminalField.placeholderString = "例如 WezTerm、Alacritty"
         nvimPathField.placeholderString = "/opt/homebrew/bin/nvim"
@@ -201,6 +214,7 @@ final class SettingsWindowController: NSWindowController {
         let form = NSGridView(views: [
             [label("终端"), terminalPopup],
             [label("自定义终端"), customTerminalField],
+            [label("已有 nvim"), remoteOpenPopup],
             [label("nvim 路径"), nvimPathField],
             [label("固定 server"), serverField]
         ])
@@ -247,6 +261,11 @@ final class SettingsWindowController: NSWindowController {
 
         nvimPathField.stringValue = config.nvimPath
         serverField.stringValue = config.server
+        if let remoteIndex = remoteOpenOptions.firstIndex(where: { $0.value == config.remoteOpen }) {
+            remoteOpenPopup.selectItem(at: remoteIndex)
+        } else {
+            remoteOpenPopup.selectItem(at: 0)
+        }
         terminalChanged()
         statusLabel.stringValue = "配置文件：\(configStore.configURL.path)"
     }
@@ -291,7 +310,8 @@ final class SettingsWindowController: NSWindowController {
         return AppConfig(
             terminal: terminal.isEmpty ? "auto" : terminal,
             nvimPath: nvimPathField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines),
-            server: serverField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+            server: serverField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines),
+            remoteOpen: selectedRemoteOpenValue()
         )
     }
 
@@ -299,6 +319,12 @@ final class SettingsWindowController: NSWindowController {
         let index = terminalPopup.indexOfSelectedItem
         guard terminalOptions.indices.contains(index) else { return "auto" }
         return terminalOptions[index].value
+    }
+
+    private func selectedRemoteOpenValue() -> String {
+        let index = remoteOpenPopup.indexOfSelectedItem
+        guard remoteOpenOptions.indices.contains(index) else { return "tab" }
+        return remoteOpenOptions[index].value
     }
 
     private func showError(_ title: String, _ message: String) {

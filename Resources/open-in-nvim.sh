@@ -15,6 +15,7 @@ export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:${PA
 NVIM_BIN="${OPEN_IN_NVIM_NVIM:-$(command -v nvim || true)}"
 TERMINAL="${OPEN_IN_NVIM_TERMINAL:-auto}"
 REMOTE_TARGET="${OPEN_IN_NVIM_SERVER:-}"
+REMOTE_OPEN="${OPEN_IN_NVIM_REMOTE_OPEN:-tab}"
 
 if [[ -z "$NVIM_BIN" ]]; then
   print -ru2 -- "找不到 nvim。请先安装 Neovim，或在 ~/.config/open-in-nvim/config 中设置 OPEN_IN_NVIM_NVIM。"
@@ -31,6 +32,13 @@ osascript_string() {
   value="${value//\"/\\\"}"
   value="${value//$'\n'/\\n}"
   printf '%s' "$value"
+}
+
+vim_string() {
+  local value="$1"
+  local squote="'"
+  value="${value//$squote/$squote$squote}"
+  printf "%s%s%s" "$squote" "$value" "$squote"
 }
 
 server_candidates() {
@@ -59,8 +67,32 @@ first_nvim_server() {
 remote_open_files() {
   local server="$1"
   shift
+  local target
+  local expr
 
-  "$NVIM_BIN" --server "$server" --remote "$@"
+  case "$REMOTE_OPEN" in
+    tab|tabpage)
+      "$NVIM_BIN" --server "$server" --remote-tab "$@"
+      ;;
+    split|window)
+      for target in "$@"; do
+        expr="execute('split ' . fnameescape($(vim_string "$target")))"
+        "$NVIM_BIN" --server "$server" --remote-expr "$expr" >/dev/null
+      done
+      ;;
+    vsplit|vertical)
+      for target in "$@"; do
+        expr="execute('vsplit ' . fnameescape($(vim_string "$target")))"
+        "$NVIM_BIN" --server "$server" --remote-expr "$expr" >/dev/null
+      done
+      ;;
+    buffer|edit)
+      "$NVIM_BIN" --server "$server" --remote "$@"
+      ;;
+    *)
+      "$NVIM_BIN" --server "$server" --remote-tab "$@"
+      ;;
+  esac
 }
 
 new_server_path() {

@@ -52,6 +52,13 @@ make install
 - Terminal.app
 - 自定义 App 名称
 
+如果文件会打开到已有 nvim 实例，也可以选择打开方式：
+
+- 新标签页
+- 水平窗口
+- 垂直窗口
+- 只打开 buffer
+
 设置会保存到：
 
 ```text
@@ -70,6 +77,7 @@ nvim ~/.config/open-in-nvim/config
 ```sh
 OPEN_IN_NVIM_TERMINAL=ghostty
 OPEN_IN_NVIM_NVIM=/opt/homebrew/bin/nvim
+OPEN_IN_NVIM_REMOTE_OPEN=tab
 ```
 
 支持的 `OPEN_IN_NVIM_TERMINAL` 值：
@@ -104,14 +112,14 @@ macOS 对 Finder Sync Extension 有系统级限制；如果某个位置没有显
 
 ## 已有 nvim 实例
 
-脚本会使用：
+脚本会优先使用：
 
 ```sh
 nvim --serverlist
-nvim --server <address> --remote <file>
+nvim --server <address> --remote-tab <file>
 ```
 
-因此只要已有 nvim 出现在 `nvim --serverlist` 里，文件就会打开到该实例中。
+因此只要已有 nvim 出现在 `nvim --serverlist` 里，文件就会打开到该实例中。`OPEN_IN_NVIM_REMOTE_OPEN` 支持 `tab`、`split`、`vsplit`、`buffer`。
 
 如果你想固定发送到某个实例，可以在配置文件中设置：
 
