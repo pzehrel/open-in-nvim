@@ -1,0 +1,76 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    name: Build DMG and publish release
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set bundle version from tag
+        run: |
+          set -euo pipefail
+
+          VERSION="${GITHUB_REF_NAME#v}"
+          BUILD_NUMBER="${GITHUB_RUN_NUMBER}"
+
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${VERSION}" Packaging/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${BUILD_NUMBER}" Packaging/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${VERSION}" Packaging/FinderSyncInfo.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${BUILD_NUMBER}" Packaging/FinderSyncInfo.plist
+
+      - name: Build DMG
+        run: make dmg
+
+      - name: Generate checksum
+        run: |
+          set -euo pipefail
+          shasum -a 256 "dist/Open In Nvim.dmg" > "dist/Open In Nvim.dmg.sha256"
+
+      - name: Generate changelog
+        run: |
+          set -euo pipefail
+
+          TAG="${GITHUB_REF_NAME}"
+          CURRENT_COMMIT="$(git rev-list -n 1 "${TAG}")"
+          PREVIOUS_TAG="$(git describe --tags --abbrev=0 "${CURRENT_COMMIT}^" 2>/dev/null || true)"
+
+          {
+            echo "## Changes"
+            echo
+            if [[ -n "${PREVIOUS_TAG}" ]]; then
+              git log --pretty=format:"- %s (%h)" "${PREVIOUS_TAG}..${CURRENT_COMMIT}"
+            else
+              git log --pretty=format:"- %s (%h)" "${CURRENT_COMMIT}"
+            fi
+            echo
+            echo
+            echo "## Assets"
+            echo
+            echo "- Open In Nvim.dmg"
+            echo "- Open In Nvim.dmg.sha256"
+          } > release_notes.md
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          gh release create "${GITHUB_REF_NAME}" \
+            "dist/Open In Nvim.dmg#Open In Nvim.dmg" \
+            "dist/Open In Nvim.dmg.sha256#Open In Nvim.dmg.sha256" \
+            --title "${GITHUB_REF_NAME}" \
+            --notes-file release_notes.md

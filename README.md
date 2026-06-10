@@ -152,4 +152,13 @@ make dmg
 dist/Open In Nvim.dmg
 ```
 
+发布版本：
+
+```sh
+git tag v0.3.0
+git push origin v0.3.0
+```
+
+推送 `v*` tag 后，GitHub Actions 会自动构建 DMG、生成 sha256、根据上一个 tag 生成 changelog，并创建 GitHub Release。
+
 核心逻辑在 `Resources/open-in-nvim.sh`，macOS 服务和默认打开方式入口在 `Sources/OpenInNvim/main.swift`。
