@@ -1,13 +1,14 @@
----
-created: 2026-06-10
-type: note
-status: active
-tags: [macos, nvim]
----
+<p align="center">
+  <img src="Resources/AppIcon.png" alt="Open In Nvim logo" width="128" height="128">
+</p>
 
-# Open In Nvim
+<h1 align="center">Open In Nvim</h1>
 
-这是一个很小的 macOS App，用来把 Finder 里的文件或文件夹交给 Neovim：
+<p align="center">
+  从 Finder 右键菜单、“打开方式”或默认打开方式，把文件和文件夹快速交给 Neovim。
+</p>
+
+## 功能
 
 - 在支持的 Finder 目录中，右键菜单会直接显示“在 nvim 中打开”。
 - 右键文件或文件夹，选择“快速操作”或“服务”里的“在 nvim 中打开”。
@@ -128,7 +129,7 @@ nvim --listen /tmp/my-nvim.sock
 
 ```sh
 make build
-open build/在\ nvim\ 中打开.app
+open "build/Open In Nvim.app"
 ```
 
 核心逻辑在 `Resources/open-in-nvim.sh`，macOS 服务和默认打开方式入口在 `Sources/OpenInNvim/main.swift`。
