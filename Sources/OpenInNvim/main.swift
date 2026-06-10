@@ -156,7 +156,7 @@ final class SettingsWindowController: NSWindowController {
             backing: .buffered,
             defer: false
         )
-        window.title = "Open-In-Nvim"
+        window.title = "Open In Nvim"
         window.center()
 
         super.init(window: window)

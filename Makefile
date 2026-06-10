@@ -1,5 +1,5 @@
 APP_NAME := OpenInNvim
-APP_DISPLAY_NAME := Open-In-Nvim
+APP_DISPLAY_NAME := Open In Nvim
 EXTENSION_NAME := OpenInNvimFinderSync
 BUILD_DIR := build
 APP_DIR := $(BUILD_DIR)/$(APP_DISPLAY_NAME).app
@@ -34,7 +34,9 @@ build:
 install: build
 	mkdir -p "$(INSTALL_DIR)"
 	rm -rf "$(HOME)/Applications/在 nvim 中打开.app"
+	rm -rf "$(HOME)/Applications/Open-In-Nvim.app"
 	rm -rf "$(HOME)/Applications/$(APP_DISPLAY_NAME).app"
+	rm -rf "$(INSTALL_DIR)/Open-In-Nvim.app"
 	rm -rf "$(INSTALLED_APP)"
 	cp -R "$(APP_DIR)" "$(INSTALLED_APP)"
 	/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "$(INSTALLED_APP)"

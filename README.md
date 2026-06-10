@@ -5,7 +5,7 @@ status: active
 tags: [macos, nvim]
 ---
 
-# Open-In-Nvim
+# Open In Nvim
 
 这是一个很小的 macOS App，用来把 Finder 里的文件或文件夹交给 Neovim：
 
@@ -25,13 +25,13 @@ make install
 安装后 App 会位于：
 
 ```text
-/Applications/Open-In-Nvim.app
+/Applications/Open In Nvim.app
 ```
 
 如果 Finder 根菜单没有立刻出现，可以在系统设置里启用 Finder 扩展：
 
 ```text
-隐私与安全性 -> 扩展 -> Finder 扩展 -> Open-In-Nvim Finder Extension
+隐私与安全性 -> 扩展 -> Finder 扩展 -> Open In Nvim Finder Extension
 ```
 
 如果服务菜单没有立刻出现，可以登出重进，或在系统设置里检查：
@@ -42,7 +42,7 @@ make install
 
 ## 终端配置
 
-直接打开 `/Applications/Open-In-Nvim.app` 会显示设置窗口，可以选择：
+直接打开 `/Applications/Open In Nvim.app` 会显示设置窗口，可以选择：
 
 - 自动选择
 - Ghostty
