@@ -5,10 +5,11 @@ status: active
 tags: [macos, nvim]
 ---
 
-# 在 macOS 中用 nvim 打开文件和文件夹
+# Open-In-Nvim
 
 这是一个很小的 macOS App，用来把 Finder 里的文件或文件夹交给 Neovim：
 
+- 在支持的 Finder 目录中，右键菜单会直接显示“在 nvim 中打开”。
 - 右键文件或文件夹，选择“快速操作”或“服务”里的“在 nvim 中打开”。
 - 在“打开方式”里选择“在 nvim 中打开”，也可以把它设为某些文件类型的默认打开方式。
 - 打开文件时，如果系统里已经有可连接的 nvim 实例，会把文件放进已有 nvim 的 buffer。
@@ -24,10 +25,16 @@ make install
 安装后 App 会位于：
 
 ```text
-~/Applications/在 nvim 中打开.app
+/Applications/Open-In-Nvim.app
 ```
 
-如果 Finder 的右键菜单没有立刻出现，可以登出重进，或在系统设置里检查：
+如果 Finder 根菜单没有立刻出现，可以在系统设置里启用 Finder 扩展：
+
+```text
+隐私与安全性 -> 扩展 -> Finder 扩展 -> Open-In-Nvim Finder Extension
+```
+
+如果服务菜单没有立刻出现，可以登出重进，或在系统设置里检查：
 
 ```text
 键盘 -> 键盘快捷键 -> 服务/快速操作
@@ -35,7 +42,7 @@ make install
 
 ## 终端配置
 
-直接打开 `~/Applications/在 nvim 中打开.app` 会显示设置窗口，可以选择：
+直接打开 `/Applications/Open-In-Nvim.app` 会显示设置窗口，可以选择：
 
 - 自动选择
 - Ghostty
@@ -78,6 +85,19 @@ OPEN_IN_NVIM_TERMINAL_CMD='open -na Ghostty --args -e /bin/zsh -lc {cmd}'
 ```
 
 `{cmd}` 会被替换为已经 shell-quote 的命令。
+
+## Finder 根菜单
+
+App 内置 Finder Sync Extension。启用后，在 Finder 的受监控目录中右键文件或文件夹，会直接看到“在 nvim 中打开”菜单项。
+
+当前默认监控：
+
+- 用户个人目录 `~/`
+- 外接卷目录 `/Volumes`
+
+macOS 对 Finder Sync Extension 有系统级限制；如果某个位置没有显示根菜单项，可以继续使用“快速操作/服务”入口作为兜底。
+
+如果系统设置里没有出现这个扩展，通常需要使用完整 Xcode 工具链和开发者签名重新构建。当前 Makefile 会进行 ad-hoc 签名，适合本机开发验证；不同 macOS 版本对手工构建的 Finder Sync Extension 接受程度可能不同。
 
 ## 已有 nvim 实例
 
