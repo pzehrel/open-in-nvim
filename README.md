@@ -20,10 +20,11 @@
 ## 安装
 
 ```sh
-make install
+make dmg
+open "dist/Open In Nvim.dmg"
 ```
 
-安装后 App 会位于：
+打开 DMG 后，把 `Open In Nvim.app` 拖到 `Applications` 即可。安装后 App 会位于：
 
 ```text
 /Applications/Open In Nvim.app
@@ -52,6 +53,7 @@ make install
 
 直接打开 `/Applications/Open In Nvim.app` 会显示设置窗口，可以选择：
 
+- 语言（自动、简体中文、English）
 - 自动选择
 - Ghostty
 - Alacritty
@@ -65,6 +67,20 @@ make install
 - 水平窗口
 - 垂直窗口
 - 只打开 buffer
+
+如果没有可连接的已有 nvim，需要新开 nvim，也可以选择是否使用 tmux：
+
+- 关闭：直接在终端里启动 nvim
+- 自动：检测到 `tmux` 时，在 tmux session 里新建 window
+- 始终使用：强制使用 tmux，找不到 `tmux` 时会报错
+
+tmux session 默认留空。留空时，每次需要新建 nvim 都会创建一个新的 tmux session；填写名称后，如果该 session 已存在，会在其中新建 window，如果不存在，会创建该 session。
+
+还可以勾选哪些文件扩展名默认使用 Open In Nvim 打开，并添加自定义扩展名。默认扩展名：
+
+```text
+ts rs py json css scss less sass c cpp
+```
 
 设置会保存到：
 
@@ -82,9 +98,14 @@ nvim ~/.config/open-in-nvim/config
 示例：
 
 ```sh
+OPEN_IN_NVIM_LANGUAGE=auto
 OPEN_IN_NVIM_TERMINAL=ghostty
 OPEN_IN_NVIM_NVIM=/opt/homebrew/bin/nvim
 OPEN_IN_NVIM_REMOTE_OPEN=tab
+OPEN_IN_NVIM_DEFAULT_EXTENSIONS='ts rs py json css scss less sass c cpp'
+OPEN_IN_NVIM_STATE_FILE="$HOME/.local/state/nvim/open-in-nvim/server"
+OPEN_IN_NVIM_TMUX=auto
+OPEN_IN_NVIM_TMUX_SESSION=''
 ```
 
 支持的 `OPEN_IN_NVIM_TERMINAL` 值：
@@ -96,6 +117,12 @@ OPEN_IN_NVIM_REMOTE_OPEN=tab
 - `terminal`
 - 任意支持 AppleScript `do script` 的终端 App 名称
 
+支持的 `OPEN_IN_NVIM_LANGUAGE` 值：
+
+- `auto`
+- `zh-Hans`
+- `en`
+
 如果你的第三方终端启动方式比较特殊，可以直接覆盖命令：
 
 ```sh
@@ -103,6 +130,12 @@ OPEN_IN_NVIM_TERMINAL_CMD='open -na Ghostty --args -e /bin/zsh -lc {cmd}'
 ```
 
 `{cmd}` 会被替换为已经 shell-quote 的命令。
+
+支持的 `OPEN_IN_NVIM_TMUX` 值：
+
+- `never`
+- `auto`
+- `always`
 
 ## Finder 根菜单
 
@@ -119,35 +152,39 @@ macOS 对 Finder Sync Extension 有系统级限制；如果某个位置没有显
 
 ## 已有 nvim 实例
 
-脚本会优先使用：
+推荐安装仓库内置的 nvim 插件。插件会在普通启动 nvim 时自动开启 RPC server，因此不需要手动执行 `nvim --listen`。
+
+使用 lazy.nvim 安装本地插件：
+
+```lua
+{
+  dir = "/path/to/open-in-nvim/nvim-plugin",
+  name = "open-in-nvim",
+  config = function()
+    require("open-in-nvim").setup()
+  end,
+}
+```
+
+安装后，照常启动：
 
 ```sh
+nvim
+```
+
+App 会优先使用：
+
+```sh
+~/.local/state/nvim/open-in-nvim/server
 nvim --serverlist
 nvim --server <address> --remote-tab <file>
 ```
 
 因此只要已有 nvim 出现在 `nvim --serverlist` 里，文件就会打开到该实例中。`OPEN_IN_NVIM_REMOTE_OPEN` 支持 `tab`、`split`、`vsplit`、`buffer`。
 
-如果你想固定发送到某个实例，可以在配置文件中设置：
-
-```sh
-OPEN_IN_NVIM_SERVER=/tmp/my-nvim.sock
-```
-
-然后用这个地址启动 nvim：
-
-```sh
-nvim --listen /tmp/my-nvim.sock
-```
-
 ## 开发
 
-```sh
-make build
-open "build/Open In Nvim.app"
-```
-
-生成 DMG：
+本地生成 DMG：
 
 ```sh
 make dmg

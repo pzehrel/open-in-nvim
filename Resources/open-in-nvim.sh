@@ -13,12 +13,66 @@ fi
 export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:${PATH:-}"
 
 NVIM_BIN="${OPEN_IN_NVIM_NVIM:-$(command -v nvim || true)}"
+LANGUAGE_SETTING="${OPEN_IN_NVIM_LANGUAGE:-auto}"
 TERMINAL="${OPEN_IN_NVIM_TERMINAL:-auto}"
-REMOTE_TARGET="${OPEN_IN_NVIM_SERVER:-}"
 REMOTE_OPEN="${OPEN_IN_NVIM_REMOTE_OPEN:-tab}"
+NVIM_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
+REMOTE_STATE_FILE="${OPEN_IN_NVIM_STATE_FILE:-$NVIM_STATE_HOME/nvim/open-in-nvim/server}"
+TMUX_MODE="${OPEN_IN_NVIM_TMUX:-never}"
+TMUX_SESSION="${OPEN_IN_NVIM_TMUX_SESSION:-}"
+
+active_language() {
+  local language="$LANGUAGE_SETTING"
+  local preferred=""
+
+  case "$language" in
+    zh-Hans|en)
+      print -r -- "$language"
+      return
+      ;;
+  esac
+
+  preferred="$(/usr/bin/defaults read -g AppleLanguages 2>/dev/null | awk -F'"' '/"/ {print $2; exit}')"
+  if [[ "$preferred" == zh* ]]; then
+    print -r -- "zh-Hans"
+  else
+    print -r -- "en"
+  fi
+}
+
+message() {
+  local key="$1"
+
+  case "$(active_language):$key" in
+    zh-Hans:no_nvim)
+      print -r -- "找不到 nvim。请先安装 Neovim，或在设置中配置 nvim 路径。"
+      ;;
+    zh-Hans:tmux_missing)
+      print -r -- "已设置始终使用 tmux，但找不到 tmux。"
+      ;;
+    zh-Hans:path_missing)
+      print -r -- "路径不存在：$2"
+      ;;
+    zh-Hans:no_path)
+      print -r -- "没有收到路径。请从 Finder 右键菜单或“打开方式”调用。"
+      ;;
+    *:no_nvim)
+      print -r -- "Could not find nvim. Install Neovim or configure the nvim path in settings."
+      ;;
+    *:tmux_missing)
+      print -r -- "tmux is set to Always, but tmux could not be found."
+      ;;
+    *:path_missing)
+      print -r -- "Path does not exist: $2"
+      ;;
+    *:no_path)
+      print -r -- "No paths received. Use this app from Finder or Open With."
+      ;;
+  esac
+}
 
 if [[ -z "$NVIM_BIN" ]]; then
-  print -ru2 -- "找不到 nvim。请先安装 Neovim，或在 ~/.config/open-in-nvim/config 中设置 OPEN_IN_NVIM_NVIM。"
+  print -ru2 -- "$(message no_nvim)"
   exit 1
 fi
 
@@ -42,8 +96,13 @@ vim_string() {
 }
 
 server_candidates() {
-  if [[ -n "$REMOTE_TARGET" ]]; then
-    print -r -- "$REMOTE_TARGET"
+  local state_server=""
+
+  if [[ -r "$REMOTE_STATE_FILE" ]]; then
+    state_server="$(awk -F= '$1 == "server" {print substr($0, index($0, "=") + 1); exit}' "$REMOTE_STATE_FILE")"
+    if [[ -n "$state_server" ]]; then
+      print -r -- "$state_server"
+    fi
   fi
 
   "$NVIM_BIN" --serverlist 2>/dev/null || true
@@ -100,11 +159,54 @@ new_server_path() {
   print -r -- "$runtime_dir/open-in-nvim-${USER:-user}-$$-${RANDOM}.sock"
 }
 
+should_use_tmux() {
+  case "$TMUX_MODE" in
+    never|off|false|0|"")
+      return 1
+      ;;
+    always|on|true|1)
+      if command -v tmux >/dev/null 2>&1; then
+        return 0
+      fi
+      print -ru2 -- "$(message tmux_missing)"
+      return 2
+      ;;
+    auto)
+      command -v tmux >/dev/null 2>&1
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+tmux_command_for_target() {
+  local cwd="$1"
+  local command="$2"
+  local session="$TMUX_SESSION"
+  local quoted_session
+  local quoted_cwd
+  local quoted_command
+
+  quoted_cwd="$(quote "$cwd")"
+  quoted_command="$(quote "$command")"
+
+  if [[ -z "$session" ]]; then
+    print -r -- "exec tmux new-session -c $quoted_cwd $quoted_command"
+    return
+  fi
+
+  quoted_session="$(quote "$session")"
+
+  print -r -- "if tmux has-session -t $quoted_session 2>/dev/null; then tmux new-window -t $quoted_session -c $quoted_cwd $quoted_command; exec tmux attach-session -t $quoted_session; else exec tmux new-session -s $quoted_session -c $quoted_cwd $quoted_command; fi"
+}
+
 terminal_command_for_target() {
   local target="$1"
   local cwd
   local server
   local cmd
+  local tmux_status
 
   if [[ -d "$target" ]]; then
     cwd="$target"
@@ -113,6 +215,16 @@ terminal_command_for_target() {
     cwd="${target:h}"
     server="$(new_server_path)"
     cmd="cd $(quote "$cwd"); exec $(quote "$NVIM_BIN") --listen $(quote "$server") $(quote "$target")"
+  fi
+
+  if should_use_tmux; then
+    tmux_command_for_target "$cwd" "$cmd"
+    return
+  else
+    tmux_status="$?"
+    if [[ "$tmux_status" -eq 2 ]]; then
+      return 1
+    fi
   fi
 
   print -r -- "$cmd"
@@ -213,7 +325,7 @@ open_path() {
   local command
 
   if [[ ! -e "$target" ]]; then
-    print -ru2 -- "路径不存在：$target"
+    print -ru2 -- "$(message path_missing "$target")"
     return 1
   fi
 
@@ -229,7 +341,7 @@ open_path() {
 }
 
 if [[ "$#" -eq 0 ]]; then
-  print -ru2 -- "没有收到路径。请从 Finder 右键菜单或“打开方式”调用。"
+  print -ru2 -- "$(message no_path)"
   exit 1
 fi
 

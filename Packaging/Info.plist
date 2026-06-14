@@ -6,6 +6,11 @@
   <string>zh_CN</string>
   <key>CFBundleDisplayName</key>
   <string>Open In Nvim</string>
+  <key>CFBundleLocalizations</key>
+  <array>
+    <string>en</string>
+    <string>zh_CN</string>
+  </array>
   <key>CFBundleDocumentTypes</key>
   <array>
     <dict>
@@ -47,6 +52,8 @@
   <string>2</string>
   <key>LSMinimumSystemVersion</key>
   <string>13.0</string>
+  <key>LSUIElement</key>
+  <true/>
   <key>NSServices</key>
   <array>
     <dict>

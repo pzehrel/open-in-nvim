@@ -6,6 +6,11 @@
   <string>zh_CN</string>
   <key>CFBundleDisplayName</key>
   <string>Open In Nvim Finder Extension</string>
+  <key>CFBundleLocalizations</key>
+  <array>
+    <string>en</string>
+    <string>zh_CN</string>
+  </array>
   <key>CFBundleExecutable</key>
   <string>OpenInNvimFinderSync</string>
   <key>CFBundleIconFile</key>
