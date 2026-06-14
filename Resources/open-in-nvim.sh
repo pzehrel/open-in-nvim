@@ -13,6 +13,7 @@ fi
 export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:${PATH:-}"
 
 NVIM_BIN="${OPEN_IN_NVIM_NVIM:-$(command -v nvim || true)}"
+TMUX_BIN="${OPEN_IN_NVIM_TMUX_BIN:-$(command -v tmux || true)}"
 LANGUAGE_SETTING="${OPEN_IN_NVIM_LANGUAGE:-auto}"
 TERMINAL="${OPEN_IN_NVIM_TERMINAL:-auto}"
 REMOTE_OPEN="${OPEN_IN_NVIM_REMOTE_OPEN:-tab}"
@@ -32,7 +33,10 @@ active_language() {
       ;;
   esac
 
-  preferred="$(/usr/bin/defaults read -g AppleLanguages 2>/dev/null | awk -F'"' '/"/ {print $2; exit}')"
+  preferred="$(/usr/bin/defaults read -g AppleLanguages 2>/dev/null || true)"
+  preferred="${preferred#*\"}"
+  preferred="${preferred%%\"*}"
+
   if [[ "$preferred" == zh* ]]; then
     print -r -- "zh-Hans"
   else
@@ -95,17 +99,39 @@ vim_string() {
   printf "%s%s%s" "$squote" "$value" "$squote"
 }
 
-server_candidates() {
+state_server_candidate() {
   local state_server=""
+  local line
 
   if [[ -r "$REMOTE_STATE_FILE" ]]; then
-    state_server="$(awk -F= '$1 == "server" {print substr($0, index($0, "=") + 1); exit}' "$REMOTE_STATE_FILE")"
+    while IFS= read -r line; do
+      if [[ "$line" == server=* ]]; then
+        state_server="${line#server=}"
+        break
+      fi
+    done < "$REMOTE_STATE_FILE"
+
     if [[ -n "$state_server" ]]; then
       print -r -- "$state_server"
     fi
   fi
+}
 
-  "$NVIM_BIN" --serverlist 2>/dev/null || true
+server_candidates() {
+  state_server_candidate
+  "$NVIM_BIN" --headless -u NONE -i NONE --cmd 'set shortmess+=F' \
+    +'lua for _, server in ipairs(vim.fn.serverlist()) do print(server) end' \
+    +'qall!' 2>/dev/null || true
+}
+
+clear_stale_state_server() {
+  local server="$1"
+  local state_server
+
+  state_server="$(state_server_candidate)"
+  if [[ -n "$state_server" && "$server" == "$state_server" ]]; then
+    /bin/rm -f "$REMOTE_STATE_FILE"
+  fi
 }
 
 first_nvim_server() {
@@ -118,6 +144,8 @@ first_nvim_server() {
       print -r -- "$server"
       return 0
     fi
+
+    clear_stale_state_server "$server"
   done < <(server_candidates)
 
   return 1
@@ -154,25 +182,20 @@ remote_open_files() {
   esac
 }
 
-new_server_path() {
-  local runtime_dir="${TMPDIR:-/tmp}"
-  print -r -- "$runtime_dir/open-in-nvim-${USER:-user}-$$-${RANDOM}.sock"
-}
-
 should_use_tmux() {
   case "$TMUX_MODE" in
     never|off|false|0|"")
       return 1
       ;;
     always|on|true|1)
-      if command -v tmux >/dev/null 2>&1; then
+      if [[ -n "$TMUX_BIN" && -x "$TMUX_BIN" ]]; then
         return 0
       fi
       print -ru2 -- "$(message tmux_missing)"
       return 2
       ;;
     auto)
-      command -v tmux >/dev/null 2>&1
+      [[ -n "$TMUX_BIN" && -x "$TMUX_BIN" ]]
       ;;
     *)
       return 1
@@ -192,30 +215,27 @@ tmux_command_for_target() {
   quoted_command="$(quote "$command")"
 
   if [[ -z "$session" ]]; then
-    print -r -- "exec tmux new-session -c $quoted_cwd $quoted_command"
+    print -r -- "exec $(quote "$TMUX_BIN") new-session -c $quoted_cwd $quoted_command"
     return
   fi
 
   quoted_session="$(quote "$session")"
 
-  print -r -- "if tmux has-session -t $quoted_session 2>/dev/null; then tmux new-window -t $quoted_session -c $quoted_cwd $quoted_command; exec tmux attach-session -t $quoted_session; else exec tmux new-session -s $quoted_session -c $quoted_cwd $quoted_command; fi"
+  print -r -- "if $(quote "$TMUX_BIN") has-session -t $quoted_session 2>/dev/null; then $(quote "$TMUX_BIN") new-window -t $quoted_session -c $quoted_cwd $quoted_command; exec $(quote "$TMUX_BIN") attach-session -t $quoted_session; else exec $(quote "$TMUX_BIN") new-session -s $quoted_session -c $quoted_cwd $quoted_command; fi"
 }
 
 terminal_command_for_target() {
   local target="$1"
   local cwd
-  local server
   local cmd
   local tmux_status
 
   if [[ -d "$target" ]]; then
     cwd="$target"
-    server="$(new_server_path)"
-    cmd="cd $(quote "$cwd"); exec $(quote "$NVIM_BIN") --listen $(quote "$server") ."
+    cmd="cd $(quote "$cwd"); exec $(quote "$NVIM_BIN") ."
   else
     cwd="${target:h}"
-    server="$(new_server_path)"
-    cmd="cd $(quote "$cwd"); exec $(quote "$NVIM_BIN") --listen $(quote "$server") $(quote "$target")"
+    cmd="cd $(quote "$cwd"); exec $(quote "$NVIM_BIN") $(quote "$target")"
   fi
 
   if should_use_tmux; then

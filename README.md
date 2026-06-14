@@ -101,10 +101,10 @@ The app looks for available instances in this order:
 
 ```text
 ~/.local/state/nvim/open-in-nvim/server
-nvim --serverlist
+Neovim's serverlist() RPC discovery
 ```
 
-Files are then opened through Neovim RPC. The “Existing nvim” setting controls the open mode:
+The plugin creates the RPC server with Neovim's `serverstart()` function, so normal `nvim` launches can be reused by the app. Files are then opened through Neovim RPC. The “Existing nvim” setting controls the open mode:
 
 - New tab
 - Horizontal split

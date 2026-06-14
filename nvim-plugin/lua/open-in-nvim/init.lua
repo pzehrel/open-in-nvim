@@ -4,6 +4,11 @@ local defaults = {
   state_file = vim.fn.stdpath("state") .. "/open-in-nvim/server",
 }
 
+local current = {
+  server = nil,
+  state_file = nil,
+}
+
 local function mkdir_parent(path)
   local parent = vim.fn.fnamemodify(path, ":h")
   if parent ~= "" then
@@ -31,22 +36,73 @@ local function write_state(path, server)
   vim.fn.writefile(lines, path)
 end
 
-function M.setup(opts)
-  opts = vim.tbl_extend("force", defaults, opts or {})
+local function read_state_server(path)
+  if path == nil or path == "" or vim.fn.filereadable(path) == 0 then
+    return nil
+  end
 
-  local server = vim.v.servername
-  if server == nil or server == "" then
-    local ok
-    ok, server = pcall(vim.fn.serverstart)
-
-    if not ok then
-      return
+  for _, line in ipairs(vim.fn.readfile(path)) do
+    local server = line:match("^server=(.*)$")
+    if server ~= nil then
+      return server
     end
   end
 
-  if opts.state_file ~= nil and opts.state_file ~= "" and server ~= nil and server ~= "" then
-    write_state(opts.state_file, server)
+  return nil
+end
+
+local function remove_state_if_current()
+  if current.state_file == nil or current.state_file == "" or current.server == nil or current.server == "" then
+    return
   end
+
+  if read_state_server(current.state_file) == current.server then
+    pcall(vim.fn.delete, current.state_file)
+  end
+end
+
+local function refresh_state()
+  if current.state_file ~= nil and current.state_file ~= "" and current.server ~= nil and current.server ~= "" then
+    write_state(current.state_file, current.server)
+  end
+end
+
+local function start_server()
+  local ok, server = pcall(vim.fn.serverstart)
+  if ok and server ~= nil and server ~= "" then
+    return server
+  end
+
+  if vim.v.servername ~= nil and vim.v.servername ~= "" then
+    return vim.v.servername
+  end
+
+  return nil
+end
+
+function M.setup(opts)
+  opts = vim.tbl_extend("force", defaults, opts or {})
+
+  current.server = start_server()
+  current.state_file = opts.state_file
+
+  if current.server == nil or current.server == "" then
+    return
+  end
+
+  local group = vim.api.nvim_create_augroup("OpenInNvim", { clear = true })
+
+  vim.api.nvim_create_autocmd({ "VimEnter", "FocusGained", "DirChanged", "BufEnter" }, {
+    group = group,
+    callback = refresh_state,
+  })
+
+  vim.api.nvim_create_autocmd("VimLeavePre", {
+    group = group,
+    callback = remove_state_if_current,
+  })
+
+  refresh_state()
 end
 
 return M

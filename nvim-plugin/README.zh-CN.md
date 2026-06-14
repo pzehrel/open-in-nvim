@@ -4,7 +4,7 @@
   <a href="README.md">English</a> | 简体中文
 </p>
 
-让普通启动的 Neovim 自动开启 RPC server，方便 macOS App 把 Finder 中选择的文件发送到已有 nvim 实例。
+通过 Neovim 的 `serverstart()` 函数，让普通启动的 Neovim 自动开启 RPC server，方便 macOS App 把 Finder 中选择的文件发送到已有 nvim 实例。
 
 ## 安装
 
@@ -36,3 +36,5 @@ require("open-in-nvim").setup()
 ```
 
 其中包含当前实例的 server、cwd、pid 和更新时间。如果 nvim 运行在 tmux 中，也会记录 `tmux` 和 `tmux_pane`。
+
+实例获得焦点或切换 buffer 时会刷新该状态文件；退出时如果状态文件仍指向当前实例，则会自动清理。

@@ -4,7 +4,7 @@
   English | <a href="README.zh-CN.md">简体中文</a>
 </p>
 
-This plugin starts a Neovim RPC server for normal `nvim` launches, so the macOS app can send files selected in Finder to an existing nvim instance.
+This plugin starts a Neovim RPC server for normal `nvim` launches with Neovim's `serverstart()` function, so the macOS app can send files selected in Finder to an existing nvim instance.
 
 ## Install
 
@@ -36,3 +36,5 @@ The plugin writes a state file:
 ```
 
 It contains the current instance's server, cwd, pid, and update time. If nvim is running inside tmux, it also records `tmux` and `tmux_pane`.
+
+The state file is refreshed when the instance receives focus or changes buffers, and it is removed on exit when it still points to that instance.

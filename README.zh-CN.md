@@ -99,10 +99,10 @@ App 会按顺序寻找可用实例：
 
 ```text
 ~/.local/state/nvim/open-in-nvim/server
-nvim --serverlist
+Neovim 的 serverlist() RPC 发现
 ```
 
-然后通过 Neovim RPC 打开文件。打开方式由设置窗口中的“已有 nvim”控制，支持：
+插件会通过 Neovim 的 `serverstart()` 函数创建 RPC server，因此普通 `nvim` 启动的实例也可以被 app 复用。然后通过 Neovim RPC 打开文件。打开方式由设置窗口中的“已有 nvim”控制，支持：
 
 - 新标签页
 - 水平窗口
