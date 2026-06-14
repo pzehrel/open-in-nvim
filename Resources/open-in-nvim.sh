@@ -210,7 +210,8 @@ terminal_command_for_target() {
 
   if [[ -d "$target" ]]; then
     cwd="$target"
-    cmd="cd $(quote "$cwd"); exec $(quote "$NVIM_BIN") --listen $(quote "$(new_server_path)") ."
+    server="$(new_server_path)"
+    cmd="cd $(quote "$cwd"); exec $(quote "$NVIM_BIN") --listen $(quote "$server") ."
   else
     cwd="${target:h}"
     server="$(new_server_path)"

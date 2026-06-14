@@ -53,6 +53,7 @@ Common settings:
 - Language: Automatic, Simplified Chinese, English
 - Terminal: Automatic, Ghostty, Alacritty, iTerm2, Terminal.app, or a custom app name
 - Existing nvim: how files should open in an existing nvim instance
+- nvim plugin: install the bundled lazy.nvim spec into `~/.config/nvim/lua/plugins/open-in-nvim.lua`
 - tmux: whether to use tmux when a new nvim instance must be started
 - Default extensions: which file extensions should use Open In Nvim as the default app
 
@@ -71,24 +72,29 @@ Settings are managed by the app and stored locally. You usually do not need to e
 
 ## Existing nvim Instances
 
-The recommended setup is to install the bundled nvim plugin. It automatically starts a Neovim RPC server when nvim starts normally and writes the current instance state. You do not need to run `nvim --listen` manually.
+Open In Nvim can send a file to an already running nvim instance, but only if that instance exposes Neovim's RPC server. A plain `nvim` process does not always expose a discoverable server by default, so an external macOS app may have no reliable way to talk to it.
 
-Install the local plugin with lazy.nvim:
+The bundled nvim plugin solves that setup step. When nvim starts normally, the plugin starts the RPC server if needed and writes a small state file that Open In Nvim can discover.
 
-```lua
-{
-  dir = "/path/to/open-in-nvim/nvim-plugin",
-  name = "open-in-nvim",
-  config = function()
-    require("open-in-nvim").setup()
-  end,
-}
-```
-
-Then start nvim normally:
+This means you can keep starting nvim the usual way:
 
 ```sh
 nvim
+```
+
+No manual `nvim --listen ...` command is needed.
+
+Install the plugin from GitHub with lazy.nvim. For example, create `lua/plugins/open-in-nvim.lua`:
+
+```lua
+return {
+  "pzehrel/open-in-nvim",
+  lazy = false,
+  config = function(plugin)
+    vim.opt.runtimepath:prepend(plugin.dir .. "/nvim-plugin")
+    require("open-in-nvim").setup()
+  end,
+}
 ```
 
 The app looks for available instances in this order:

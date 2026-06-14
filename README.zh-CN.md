@@ -51,6 +51,7 @@ open "dist/Open In Nvim.dmg"
 - 语言：自动、简体中文、English
 - 终端：自动选择、Ghostty、Alacritty、iTerm2、Terminal.app、自定义 App 名称
 - 已有 nvim：选择文件进入已有 nvim 时的打开方式
+- nvim 插件：自动写入 lazy.nvim 配置到 `~/.config/nvim/lua/plugins/open-in-nvim.lua`
 - tmux：没有已有 nvim 时，是否在 tmux 中启动新实例
 - 默认扩展名：勾选哪些扩展名默认使用 Open In Nvim 打开
 
@@ -69,24 +70,29 @@ ts rs py json css scss less sass c cpp
 
 ## 已有 nvim 实例
 
-推荐安装仓库内置的 nvim 插件。插件会在普通启动 nvim 时自动开启 RPC server，并写入当前实例信息。用户不需要手动执行 `nvim --listen`。
+Open In Nvim 可以把文件发送到已经运行的 nvim 实例中，但前提是那个 nvim 实例暴露了 Neovim RPC server。普通 `nvim` 进程不一定默认暴露可发现的 server，因此外部 macOS App 可能没有稳定方式连接它。
 
-使用 lazy.nvim 安装本地插件：
+仓库内置的 nvim 插件就是用来解决这一步配置的。nvim 正常启动时，插件会在需要时自动开启 RPC server，并写入一个 Open In Nvim 可以发现的状态文件。
 
-```lua
-{
-  dir = "/path/to/open-in-nvim/nvim-plugin",
-  name = "open-in-nvim",
-  config = function()
-    require("open-in-nvim").setup()
-  end,
-}
-```
-
-安装后照常启动：
+这样你仍然可以照常启动 nvim：
 
 ```sh
 nvim
+```
+
+不需要手动执行 `nvim --listen ...`。
+
+使用 lazy.nvim 从 GitHub 安装插件。例如创建 `lua/plugins/open-in-nvim.lua`：
+
+```lua
+return {
+  "pzehrel/open-in-nvim",
+  lazy = false,
+  config = function(plugin)
+    vim.opt.runtimepath:prepend(plugin.dir .. "/nvim-plugin")
+    require("open-in-nvim").setup()
+  end,
+}
 ```
 
 App 会按顺序寻找可用实例：

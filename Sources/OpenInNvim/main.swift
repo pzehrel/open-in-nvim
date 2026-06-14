@@ -158,6 +158,7 @@ enum AppText {
             "field.language": "语言",
             "field.terminal": "终端",
             "field.existingNvim": "已有 nvim",
+            "field.nvimPlugin": "nvim 插件",
             "field.tmux": "tmux",
             "field.session": "session",
             "field.defaultExtensions": "默认扩展名",
@@ -165,6 +166,7 @@ enum AppText {
             "field.nvimPath": "nvim 路径",
             "button.save": "保存",
             "button.add": "添加",
+            "button.installPlugin": "安装插件",
             "placeholder.customTerminal": "例如 WezTerm、Alacritty",
             "placeholder.tmuxSession": "留空则创建新 session",
             "placeholder.extension": "例如 md",
@@ -173,7 +175,9 @@ enum AppText {
             "status.partialDefaultFailure": "配置已保存，部分默认打开方式设置失败：%@",
             "status.enterExtension": "请输入要添加的扩展名。",
             "status.addedExtensions": "已添加：%@，保存后生效。",
+            "status.pluginInstalled": "已写入 nvim 插件配置：%@",
             "error.saveFailed": "保存失败",
+            "error.installFailed": "安装失败",
             "error.openFailed": "打开失败",
             "error.scriptNoMessage": "打开失败，脚本没有返回错误信息。",
             "error.bundleId": "无法读取当前 App 的 Bundle Identifier。",
@@ -205,6 +209,7 @@ enum AppText {
             "field.language": "Language",
             "field.terminal": "Terminal",
             "field.existingNvim": "Existing nvim",
+            "field.nvimPlugin": "nvim plugin",
             "field.tmux": "tmux",
             "field.session": "Session",
             "field.defaultExtensions": "File extensions",
@@ -212,6 +217,7 @@ enum AppText {
             "field.nvimPath": "nvim path",
             "button.save": "Save",
             "button.add": "Add",
+            "button.installPlugin": "Install plugin",
             "placeholder.customTerminal": "For example WezTerm or Alacritty",
             "placeholder.tmuxSession": "Empty creates a new session",
             "placeholder.extension": "For example md",
@@ -220,7 +226,9 @@ enum AppText {
             "status.partialDefaultFailure": "Config saved, but some default app changes failed: %@",
             "status.enterExtension": "Enter a file extension to add.",
             "status.addedExtensions": "Added %@. Save to apply.",
+            "status.pluginInstalled": "Wrote nvim plugin config: %@",
             "error.saveFailed": "Save Failed",
+            "error.installFailed": "Install Failed",
             "error.openFailed": "Open Failed",
             "error.scriptNoMessage": "Open failed. The script did not return an error message.",
             "error.bundleId": "Could not read this app's Bundle Identifier.",
@@ -318,6 +326,35 @@ enum DefaultAppRegistration {
 
         return failures
     }
+}
+
+enum NvimPluginInstaller {
+    static var pluginSpecURL: URL {
+        FileManager.default
+            .homeDirectoryForCurrentUser
+            .appendingPathComponent(".config/nvim/lua/plugins/open-in-nvim.lua")
+    }
+
+    static func install() throws -> URL {
+        let url = pluginSpecURL
+        try FileManager.default.createDirectory(
+            at: url.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        try pluginSpec.write(to: url, atomically: true, encoding: .utf8)
+        return url
+    }
+
+    private static let pluginSpec = """
+    return {
+      "pzehrel/open-in-nvim",
+      lazy = false,
+      config = function(plugin)
+        vim.opt.runtimepath:prepend(plugin.dir .. "/nvim-plugin")
+        require("open-in-nvim").setup()
+      end,
+    }
+    """
 }
 
 final class SettingsWindowController: NSWindowController {
@@ -432,6 +469,9 @@ final class SettingsWindowController: NSWindowController {
         saveButton.bezelStyle = .rounded
         saveButton.keyEquivalent = "\r"
 
+        let installPluginButton = NSButton(title: t("button.installPlugin"), target: self, action: #selector(installNvimPlugin))
+        installPluginButton.bezelStyle = .rounded
+
         let buttonSpacer = NSView()
         buttonSpacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
         let buttonStack = NSStackView(views: [buttonSpacer, saveButton])
@@ -455,7 +495,8 @@ final class SettingsWindowController: NSWindowController {
         let generalForm = form(views: [
             [label(t("field.language")), languagePopup],
             [label(t("field.terminal")), terminalPopup],
-            [label(t("field.existingNvim")), remoteOpenPopup]
+            [label(t("field.existingNvim")), remoteOpenPopup],
+            [label(t("field.nvimPlugin")), installPluginButton]
         ])
 
         let newInstanceForm = form(views: [
@@ -639,6 +680,15 @@ final class SettingsWindowController: NSWindowController {
             }
         } catch {
             showError(t("error.saveFailed"), error.localizedDescription)
+        }
+    }
+
+    @objc private func installNvimPlugin() {
+        do {
+            let url = try NvimPluginInstaller.install()
+            statusLabel.stringValue = String(format: t("status.pluginInstalled"), url.path)
+        } catch {
+            showError(t("error.installFailed"), error.localizedDescription)
         }
     }
 
